@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -23,10 +24,12 @@ public class Commander implements CommandExecutor {
     private final List<UUID> allowed = new ArrayList<>();
     private final Main main;
     private final Title title;
+    private final Messenger messenger;
 
     public Commander(Main main) {
         this.main = main;
         title = Title.of(main);
+        messenger = new Messenger(main);
     }
 
     @Override
@@ -65,13 +68,17 @@ public class Commander implements CommandExecutor {
             if (target.isOnline()) {
                 allowed.add(target.getUniqueId());
                 main.process(() -> allowed.remove(target.getUniqueId()), 6000);
-                ((Player) target).sendMessage(new String[]{
+                List<String> list = Arrays.asList(
                         "§a你获得了修改昵称的权限",
                         "§a你有五分钟的时间来修改",
                         "§a将会保留最后设置的昵称"
-                });
-                title.send((Player) target, new TitleEntry("§a你获得了修改昵称的权限", "§a你有300秒的时间"));
-                p.sendMessage("§a操作成功");
+                );
+                messenger.sendList((Player) target, "allow.notify", list);
+                title.send((Player) target, new TitleEntry(
+                        messenger.find("allow.main", "§a你获得了修改昵称的权限"),
+                        messenger.find("allow.sub", "§a你有300秒的时间")
+                ));
+                messenger.send(p, "success", "§a操作成功");
             }
         }
         return false;
@@ -140,7 +147,7 @@ public class Commander implements CommandExecutor {
         if (target.isOnline()) {
             main.set((Player) target, nick);
         }
-        p.sendMessage("§a设置成功");
+        messenger.send(p, "success", "§a操作成功");
     }
 
     private void sendMessage(CommandSender p) {
