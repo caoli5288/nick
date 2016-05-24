@@ -1,0 +1,10 @@
+name: Nick
+main: com.mengcraft.nick.Main
+version: ${project.version}
+author: caoli5288
+
+commands:
+  nick:
+    description: None.
+
+depend: [iTag]
