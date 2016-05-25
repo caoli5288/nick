@@ -91,7 +91,7 @@ public class Main extends JavaPlugin {
     }
 
     public void set(Player p, String nick) {
-        String fin = getPrefix() + nick;
+        String fin = getPrefix() + nick + "§r";
         p.setDisplayName(fin);
         p.setPlayerListName(fin);
         p.setCustomName(fin);
