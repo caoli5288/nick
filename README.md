@@ -18,3 +18,9 @@ Nick plugin for bukkit based minecraft server.
 * /nick allow \<player>
     * Give target `nick.set` permission **5** minute.
     * Permission `nick.admin` required.
+* /nick set-color \<color>
+    * Set owner nick color to red, blue or other.
+    * Permission `nick.set.color` required.
+* /nick set-color \<color> \<player>
+    * Set target player's nick color.
+    * Permission `nick.admin` required.

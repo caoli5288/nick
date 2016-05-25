@@ -90,8 +90,16 @@ public class Main extends JavaPlugin {
         return false;
     }
 
-    public void set(Player p, String nick) {
-        String fin = getPrefix() + nick + "§r";
+    public void set(Player p, Nick nick) {
+        StringBuilder b = new StringBuilder();
+        b.append(getPrefix());
+        if (nick.hasColor()) {
+            b.append(nick.getColor());
+        }
+        b.append(nick);
+        b.append("§r");
+
+        String fin = b.toString();
         p.setDisplayName(fin);
         p.setPlayerListName(fin);
         p.setCustomName(fin);

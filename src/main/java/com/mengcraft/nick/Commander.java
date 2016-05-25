@@ -1,6 +1,7 @@
 package com.mengcraft.nick;
 
 import com.mengcraft.nick.entity.Nick;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -42,12 +43,14 @@ public class Commander implements CommandExecutor {
             String next = it.next();
             if (eq(next, "set")) {
                 return set(p, it);
+            } else if (eq(next, "set-color")) {
+                return setColor(p, it);
             } else if (eq(next, "see")) {
                 return see(p, it);
             } else if (eq(next, "allow")) {
                 return allow(p, it);
             } else if (eq(next, "reload")) {
-                return reload(p, it);
+                return reload(p);
             }
         } else {
             sendMessage(p);
@@ -55,7 +58,7 @@ public class Commander implements CommandExecutor {
         return false;
     }
 
-    private boolean reload(CommandSender p, Iterator<String> it) {
+    private boolean reload(CommandSender p) {
         if (p.hasPermission("nick.admin")) {
             main.reloadConfig();
         }
@@ -99,6 +102,48 @@ public class Commander implements CommandExecutor {
         return false;
     }
 
+    private boolean setColor(CommandSender p, Iterator<String> it) {
+        if (it.hasNext()) {
+            ChatColor color = ChatColor.valueOf(it.next().toUpperCase());
+            if (eq(color, null)) {
+                throw new NullPointerException("color");
+            }
+            if (it.hasNext()) {
+                return setColor(p, it.next(), color);
+            }
+            return setColor(p, color);
+        }
+        return false;
+    }
+
+    private boolean setColor(CommandSender p, String next, ChatColor color) {
+        boolean b = p.hasPermission("color.admin");
+        if (b) {
+            setColor(p, color, main.getServer().getOfflinePlayer(next));
+        }
+        return b;
+    }
+
+    private boolean setColor(CommandSender p, ChatColor color) {
+        boolean b = p instanceof Player && p.hasPermission("color.set.color");
+        if (b) {
+            setColor(p, color, (Player) p);
+        }
+        return b;
+    }
+
+    private void setColor(CommandSender p, ChatColor color, OfflinePlayer target) {
+        main.execute(() -> {
+            Nick nick = main.fetch(target);
+            nick.setColor(color.toString());
+            main.save(nick);
+            main.process(() -> {
+                if (target.isOnline()) main.set((Player) target, nick);
+            });
+            messenger.send(p, "success", "§a操作成功");
+        });
+    }
+
     private boolean set(CommandSender p, Iterator<String> it) {
         if (it.hasNext()) {
             String nick = it.next();
@@ -134,7 +179,7 @@ public class Commander implements CommandExecutor {
             try {
                 main.save(nick1);
                 main.getDatabase().commitTransaction();
-                main.process(() -> set(p, target, nick));
+                main.process(() -> set(p, target, nick1));
             } catch (Exception e) {
                 p.sendMessage("§c设置失败，可能存在重名");
             } finally {
@@ -143,7 +188,7 @@ public class Commander implements CommandExecutor {
         });
     }
 
-    private void set(CommandSender p, OfflinePlayer target, String nick) {
+    private void set(CommandSender p, OfflinePlayer target, Nick nick) {
         if (target.isOnline()) {
             main.set((Player) target, nick);
         }
@@ -158,6 +203,10 @@ public class Commander implements CommandExecutor {
             if (p.hasPermission("nick.admin")) {
                 p.sendMessage("§6/nick set <nick> <player>");
                 p.sendMessage("§6/nick allow <player>");
+                p.sendMessage("§6/nick set-color <color> <player>");
+            }
+            if (p.hasPermission("nick.set.color")) {
+                p.sendMessage("§6/nick set-color <color>");
             }
         } else {
             p.sendMessage("§6/nick set <nick> <player>");

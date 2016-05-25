@@ -43,7 +43,7 @@ public class Executor implements Listener {
 
     private void process(Player p, Nick nick) {
         if (p.isOnline() && nick.hasNick()) {
-            main.set(p, nick.getNick());
+            main.set(p, nick);
         }
     }
 

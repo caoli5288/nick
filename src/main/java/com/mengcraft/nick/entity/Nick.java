@@ -13,8 +13,11 @@ public class Nick {
 
     @Id
     private UUID id;
+    @Column(length = 15)
     private String name;
     private String nick;
+    @Column(length = 2)
+    private String color;
     @Column(unique = true)
     private String origin;
 
@@ -36,6 +39,18 @@ public class Nick {
 
     public String getNick() {
         return nick;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public boolean hasColor() {
+        return getColor() != null;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 
     public String getOrigin() {
