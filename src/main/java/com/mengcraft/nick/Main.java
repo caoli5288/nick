@@ -96,7 +96,7 @@ public class Main extends JavaPlugin {
         if (nick.hasColor()) {
             b.append(nick.getColor());
         }
-        b.append(nick);
+        b.append(nick.getNick());
         b.append("§r");
 
         String fin = b.toString();
