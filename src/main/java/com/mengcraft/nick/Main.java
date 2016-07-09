@@ -6,6 +6,7 @@ import com.mengcraft.nick.entity.Nick;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
@@ -41,6 +42,11 @@ public class Main extends JavaPlugin {
         prefix = getConfig().getString("prefix");
         pattern = Pattern.compile(getConfig().getString("nick.allow"));
         blockList = getConfig().getStringList("nick.block");
+
+        Plugin iTag = getServer().getPluginManager().getPlugin("iTag");
+        if (iTag != null && getConfig().getBoolean("modify.tag")) {
+            getServer().getPluginManager().registerEvents(new TagExecutor(), this);
+        }
 
         getServer().getPluginManager().registerEvents(new Executor(this), this);
         getCommand("nick").setExecutor(new Commander(this));
@@ -101,7 +107,9 @@ public class Main extends JavaPlugin {
 
         String fin = b.toString();
         p.setDisplayName(fin);
-        p.setPlayerListName(fin);
+        if (getConfig().getBoolean("modify.tab")) {
+            p.setPlayerListName(fin);
+        }
         p.setCustomName(fin);
     }
 

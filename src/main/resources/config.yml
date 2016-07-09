@@ -1,4 +1,7 @@
 prefix: '#'
+modify:
+  tab: true
+  tag: true
 nick:
   allow: '[\u4E00-\u9FA5]+'
   block:
