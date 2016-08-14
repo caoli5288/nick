@@ -135,7 +135,11 @@ public class Commander implements CommandExecutor {
     private void setColor(CommandSender p, ChatColor color, OfflinePlayer target) {
         main.execute(() -> {
             Nick nick = main.fetch(target);
-            nick.setColor(color.toString());
+            if (eq(color, ChatColor.RESET)) {
+                nick.setColor(null);
+            } else {
+                nick.setColor(color.toString());
+            }
             main.save(nick);
             main.process(() -> {
                 if (target.isOnline()) main.set((Player) target, nick);
