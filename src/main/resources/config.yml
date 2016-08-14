@@ -4,7 +4,9 @@ modify:
   tag: true
 nick:
   allow: '[\u4E00-\u9FA5]+'
+  coloured: true
   block:
   - '操'
   - '艹'
   - '女马'
+setting-version: 1

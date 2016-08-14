@@ -18,14 +18,14 @@ import java.util.regex.Pattern;
  */
 public class Main extends JavaPlugin {
 
+    private boolean coloured;
     private String prefix;
     private Pattern pattern;
     private List<String> blockList;
 
     @Override
     public void onEnable() {
-        getConfig().options().copyDefaults(true);
-        saveConfig();
+        saveDefaultConfig();
 
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
         if (db.isNotInitialized()) {
@@ -39,6 +39,7 @@ public class Main extends JavaPlugin {
         db.install();
         db.reflect();
 
+        coloured = getConfig().getBoolean("nick.coloured");
         prefix = getConfig().getString("prefix");
         pattern = Pattern.compile(getConfig().getString("nick.allow"));
         blockList = getConfig().getStringList("nick.block");
@@ -99,7 +100,7 @@ public class Main extends JavaPlugin {
     public void set(Player p, Nick nick) {
         StringBuilder b = new StringBuilder();
         b.append(getPrefix());
-        if (nick.hasColor()) {
+        if (coloured && nick.hasColor()) {
             b.append(nick.getColor());
         }
         b.append(nick.getNick());
@@ -136,4 +137,5 @@ public class Main extends JavaPlugin {
     public Collection<? extends Player> getOnline() {
         return getServer().getOnlinePlayers();
     }
+
 }
