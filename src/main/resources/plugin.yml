@@ -7,4 +7,5 @@ commands:
   nick:
     description: None.
 
+depend: [SimpleORM]
 softdepend: [Vault, TagAPI]
