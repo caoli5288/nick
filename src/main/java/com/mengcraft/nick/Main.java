@@ -104,9 +104,8 @@ public class Main extends JavaPlugin {
 
     public void set(Player p, Nick nick) {
         StringBuilder b = new StringBuilder();
-        b.append(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)));
-        b.append("§r");
         b.append(prefix);
+        b.append("§r");
         if (coloured && nick.hasColor()) {
             b.append(nick.getColor());
         }
@@ -116,7 +115,7 @@ public class Main extends JavaPlugin {
         String fin = b.toString();
         p.setDisplayName(fin);
         if (getConfig().getBoolean("modify.tab")) {
-            p.setPlayerListName(fin);
+            p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)) + fin);
         }
         p.setCustomName(fin);
     }
