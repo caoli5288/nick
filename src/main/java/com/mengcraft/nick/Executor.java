@@ -1,6 +1,5 @@
 package com.mengcraft.nick;
 
-import com.mengcraft.nick.entity.Nick;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,12 +18,17 @@ public class Executor implements Listener {
 
     @EventHandler
     public void handle(PlayerJoinEvent event) {
-        Player p = event.getPlayer();
-        main.execute(() -> {
-            Nick nick = main.fetch(p);
-            main.process(() -> {
+        main.execute(() -> fetch(event.getPlayer()));
+    }
+
+    private void fetch(Player p) {
+        Nick nick = main.fetch(p);
+        main.process(() -> {
+            NickFetchedEvent event1 = new NickFetchedEvent(p, nick);
+            main.getServer().getPluginManager().callEvent(event1);
+            if (!event1.isCancelled()) {
                 process(p, nick);
-            });
+            }
         });
     }
 

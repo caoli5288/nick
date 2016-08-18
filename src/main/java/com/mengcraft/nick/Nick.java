@@ -1,4 +1,4 @@
-package com.mengcraft.nick.entity;
+package com.mengcraft.nick;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -13,13 +13,15 @@ public class Nick {
 
     @Id
     private UUID id;
+
     @Column(length = 15)
     private String name;
+
+    @Column(unique = true)
     private String nick;
+
     @Column(length = 2)
     private String color;
-    @Column(unique = true)
-    private String origin;
 
     public UUID getId() {
         return id;
@@ -51,14 +53,6 @@ public class Nick {
 
     public void setColor(String color) {
         this.color = color;
-    }
-
-    public String getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(String origin) {
-        this.origin = origin;
     }
 
     public void setNick(String nick) {

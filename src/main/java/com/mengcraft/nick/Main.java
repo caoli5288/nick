@@ -1,8 +1,8 @@
 package com.mengcraft.nick;
 
-import com.mengcraft.nick.db.EbeanHandler;
-import com.mengcraft.nick.db.EbeanManager;
-import com.mengcraft.nick.entity.Nick;
+import com.mengcraft.simpleorm.EbeanHandler;
+import com.mengcraft.simpleorm.EbeanManager;
+import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -40,12 +40,17 @@ public class Main extends JavaPlugin {
         db.reflect();
 
         coloured = getConfig().getBoolean("nick.coloured");
-        prefix = getConfig().getString("prefix");
-        pattern = Pattern.compile(getConfig().getString("nick.allow"));
+        prefix = getConfig().getString("prefix", "#");
+        pattern = Pattern.compile(getConfig().getString("nick.allow", "[\\u4E00-\\u9FA5]+"));
         blockList = getConfig().getStringList("nick.block");
 
-        Plugin iTag = getServer().getPluginManager().getPlugin("iTag");
-        if (iTag != null && getConfig().getBoolean("modify.tag")) {
+        Plugin p1 = getServer().getPluginManager().getPlugin("Vault");
+        if (p1 != null) {
+            NickPrefix.INSTANCE.setChat(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
+        }
+
+        Plugin p2 = getServer().getPluginManager().getPlugin("TagAPI");
+        if (p2 != null && getConfig().getBoolean("modify.tag")) {
             getServer().getPluginManager().registerEvents(new TagExecutor(), this);
         }
 
@@ -99,7 +104,9 @@ public class Main extends JavaPlugin {
 
     public void set(Player p, Nick nick) {
         StringBuilder b = new StringBuilder();
-        b.append(getPrefix());
+        b.append(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)));
+        b.append("§r");
+        b.append(prefix);
         if (coloured && nick.hasColor()) {
             b.append(nick.getColor());
         }
@@ -126,10 +133,6 @@ public class Main extends JavaPlugin {
         getServer().getScheduler().runTask(this, task);
     }
 
-    public String getPrefix() {
-        return prefix == null ? "" : prefix;
-    }
-
     public void save(Object nick) {
         getDatabase().save(nick);
     }
@@ -138,4 +141,11 @@ public class Main extends JavaPlugin {
         return getServer().getOnlinePlayers();
     }
 
+    public boolean isColoured() {
+        return coloured;
+    }
+
+    public static boolean eq(Object i, Object j) {
+        return i == j || (i != null && i.equals(j));
+    }
 }

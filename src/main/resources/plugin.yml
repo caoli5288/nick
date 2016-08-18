@@ -7,4 +7,4 @@ commands:
   nick:
     description: None.
 
-softdepend: [iTag]
+softdepend: [Vault, TagAPI]

@@ -1,6 +1,5 @@
 package com.mengcraft.nick;
 
-import com.mengcraft.nick.entity.Nick;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -176,7 +175,6 @@ public class Commander implements CommandExecutor {
         main.execute(() -> {
             Nick nick1 = main.fetch(target);
             nick1.setNick(nick);
-            nick1.setOrigin(stripColor(nick));
 
             main.getDatabase().beginTransaction();
 
