@@ -7,17 +7,22 @@ import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
  * Created on 16-5-6.
  */
-public class Main extends JavaPlugin {
+public class Main extends JavaPlugin implements NickManager {
 
+    private final Map<UUID, Nick> set = new HashMap<>();
     private boolean coloured;
     private String prefix;
     private Pattern pattern;
@@ -62,6 +67,11 @@ public class Main extends JavaPlugin {
                 ChatColor.GREEN + "shop105595113.taobao.com"
         });
 
+        getServer().getServicesManager().register(NickManager.class,
+                this,
+                this,
+                ServicePriority.Normal);
+
         new MetricsLite(this).start();
     }
 
@@ -102,22 +112,44 @@ public class Main extends JavaPlugin {
         return false;
     }
 
-    public void set(Player p, Nick nick) {
-        StringBuilder b = new StringBuilder();
-        b.append(prefix);
-        b.append("§r");
-        if (coloured && nick.hasColor()) {
-            b.append(nick.getColor());
-        }
-        b.append(nick.getNick());
-        b.append("§r");
+    @Override
+    public Nick get(Player p) {
+        return set.get(p.getUniqueId());
+    }
 
-        String fin = b.toString();
-        p.setDisplayName(fin);
-        if (getConfig().getBoolean("modify.tab")) {
-            p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)) + fin);
+    public void set(Player p, Nick nick) {
+        set(p, nick, false);
+    }
+
+    public void set(Player p, Nick nick, boolean color) {
+        if (nick == null) {
+            if (p.isOnline()) {
+                if (getConfig().getBoolean("modify.tab")) {
+                    p.setPlayerListName(null);
+                }
+                p.setCustomName(null);
+                p.setDisplayName(null);
+            }
+            set.remove(p.getUniqueId());
+        } else {
+            StringBuilder b = new StringBuilder();
+            b.append(prefix);
+            b.append("§r");
+            if (nick.hasColor() && (coloured || color)) {
+                b.append(nick.getColor());
+            }
+
+            b.append(nick.getNick());
+            b.append("§r");
+
+            String fin = b.toString();
+            p.setDisplayName(fin);
+            if (getConfig().getBoolean("modify.tab")) {
+                p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)) + fin);
+            }
+            p.setCustomName(fin);
+            set.put(p.getUniqueId(), nick);
         }
-        p.setCustomName(fin);
     }
 
     public void execute(Runnable task) {
@@ -140,11 +172,8 @@ public class Main extends JavaPlugin {
         return getServer().getOnlinePlayers();
     }
 
-    public boolean isColoured() {
-        return coloured;
-    }
-
     public static boolean eq(Object i, Object j) {
         return i == j || (i != null && i.equals(j));
     }
+
 }

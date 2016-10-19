@@ -1,5 +1,6 @@
 package com.mengcraft.nick;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -14,7 +15,7 @@ public class NickFetchedEvent extends PlayerEvent implements Cancellable {
     private final Nick nick;
     private boolean b;
 
-    public NickFetchedEvent(Player p, Nick nick) {
+    private NickFetchedEvent(Player p, Nick nick) {
         super(p);
         this.nick = nick;
     }
@@ -41,4 +42,11 @@ public class NickFetchedEvent extends PlayerEvent implements Cancellable {
     public void setCancelled(boolean b) {
         this.b = b;
     }
+
+    public static NickFetchedEvent call(Player p, Nick nick) {
+        NickFetchedEvent event = new NickFetchedEvent(p, nick);
+        Bukkit.getPluginManager().callEvent(event);
+        return event;
+    }
+
 }

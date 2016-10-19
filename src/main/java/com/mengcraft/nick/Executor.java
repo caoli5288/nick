@@ -24,9 +24,8 @@ public class Executor implements Listener {
     private void fetch(Player p) {
         Nick nick = main.fetch(p);
         main.process(() -> {
-            NickFetchedEvent event1 = new NickFetchedEvent(p, nick);
-            main.getServer().getPluginManager().callEvent(event1);
-            if (!event1.isCancelled()) {
+            NickFetchedEvent event = NickFetchedEvent.call(p, nick);
+            if (!event.isCancelled()) {
                 process(p, nick);
             }
         });
