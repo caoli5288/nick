@@ -150,6 +150,7 @@ public class Main extends JavaPlugin implements NickManager {
             p.setCustomName(fin);
             set.put(p.getUniqueId(), nick);
         }
+        TagExecutor.f5(p);
     }
 
     protected void quit(Player p) {
