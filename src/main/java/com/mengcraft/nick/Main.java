@@ -152,6 +152,10 @@ public class Main extends JavaPlugin implements NickManager {
         }
     }
 
+    protected void quit(Player p) {
+        set.remove(p.getUniqueId());
+    }
+
     public void execute(Runnable task) {
         getServer().getScheduler().runTaskAsynchronously(this, task);
     }

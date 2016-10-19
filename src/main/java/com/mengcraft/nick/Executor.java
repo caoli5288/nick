@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
  * Created on 16-5-6.
@@ -19,6 +20,11 @@ public class Executor implements Listener {
     @EventHandler
     public void handle(PlayerJoinEvent event) {
         main.execute(() -> fetch(event.getPlayer()));
+    }
+
+    @EventHandler
+    public void handle(PlayerQuitEvent event) {
+        main.quit(event.getPlayer());
     }
 
     private void fetch(Player p) {
