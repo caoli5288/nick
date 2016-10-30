@@ -1,19 +1,18 @@
 package com.mengcraft.nick;
 
 import net.milkbowl.vault.chat.Chat;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 /**
  * Created on 16-8-19.
  */
-public class NickPrefix {
+public class VaultPrefix {
 
-    public static final NickPrefix INSTANCE = new NickPrefix();
+    public static final VaultPrefix INSTANCE = new VaultPrefix();
 
     private Chat chat;
 
-    private NickPrefix() {
+    private VaultPrefix() {
     }
 
     public String getPrefix(Player p) {

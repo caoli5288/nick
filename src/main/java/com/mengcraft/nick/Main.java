@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -27,6 +30,8 @@ public class Main extends JavaPlugin implements NickManager {
     private String prefix;
     private Pattern pattern;
     private List<String> blockList;
+
+    private ThreadPoolExecutor pool;
 
     @Override
     public void onEnable() {
@@ -44,6 +49,8 @@ public class Main extends JavaPlugin implements NickManager {
         db.install();
         db.reflect();
 
+        pool = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+
         coloured = getConfig().getBoolean("nick.coloured");
         prefix = getConfig().getString("prefix", "#");
         pattern = Pattern.compile(getConfig().getString("nick.allow", "[\\u4E00-\\u9FA5]+"));
@@ -51,7 +58,7 @@ public class Main extends JavaPlugin implements NickManager {
 
         Plugin p1 = getServer().getPluginManager().getPlugin("Vault");
         if (p1 != null) {
-            NickPrefix.INSTANCE.setChat(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
+            VaultPrefix.INSTANCE.setChat(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
         }
 
         Plugin p2 = getServer().getPluginManager().getPlugin("TagAPI");
@@ -73,6 +80,14 @@ public class Main extends JavaPlugin implements NickManager {
                 ServicePriority.Normal);
 
         new MetricsLite(this).start();
+    }
+
+    @Override
+    public void onDisable() {
+        try {
+            pool.shutdown();
+        } catch (Exception e) {
+        }
     }
 
     @Override
@@ -145,7 +160,7 @@ public class Main extends JavaPlugin implements NickManager {
             String fin = b.toString();
             p.setDisplayName(fin);
             if (getConfig().getBoolean("modify.tab")) {
-                p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', NickPrefix.INSTANCE.getPrefix(p)) + fin);
+                p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', VaultPrefix.INSTANCE.getPrefix(p)) + fin);
             }
             p.setCustomName(fin);
             set.put(p.getUniqueId(), nick);
@@ -158,7 +173,7 @@ public class Main extends JavaPlugin implements NickManager {
     }
 
     public void execute(Runnable task) {
-        getServer().getScheduler().runTaskAsynchronously(this, task);
+        pool.execute(task);
     }
 
     public void process(Runnable task, int i) {
