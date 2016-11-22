@@ -113,12 +113,12 @@ public class Main extends JavaPlugin implements NickManager {
 
     public boolean check(String nick) {
         if (pattern.matcher(nick).matches()) {
-            return !hasBlocked(nick);
+            return !cntBlockedStr(nick);
         }
         return false;
     }
 
-    private boolean hasBlocked(String nick) {
+    private boolean cntBlockedStr(String nick) {
         for (String block : blockList) {
             if (nick.contains(block)) {
                 return true;

@@ -163,25 +163,25 @@ public class Commander implements CommandExecutor {
         return false;
     }
 
-    private boolean set(CommandSender p, String nick, String next) {
+    private boolean set(CommandSender p, String nick, String name) {
         boolean b = p.hasPermission("nick.admin");
         if (b) {
-            set(p, nick, main.getServer().getOfflinePlayer(next));
+            set(p, nick, main.getServer().getOfflinePlayer(name));
         }
         return b;
     }
 
-    private void set(CommandSender p, String nick, OfflinePlayer target) {
+    private void set(CommandSender p, String nick, OfflinePlayer player) {
         main.execute(() -> {
-            Nick nick1 = main.fetch(target);
-            nick1.setNick(nick);
+            Nick entity = main.fetch(player);
+            entity.setNick(nick);
 
             main.getDatabase().beginTransaction();
 
             try {
-                main.save(nick1);
+                main.save(entity);
                 main.getDatabase().commitTransaction();
-                main.process(() -> set(p, target, nick1));
+                main.process(() -> set(p, player, entity));
             } catch (Exception e) {
                 p.sendMessage("§c设置失败，可能存在重名");
             } finally {
@@ -190,9 +190,9 @@ public class Commander implements CommandExecutor {
         });
     }
 
-    private void set(CommandSender p, OfflinePlayer target, Nick nick) {
-        if (target.isOnline()) {
-            main.set((Player) target, nick);
+    private void set(CommandSender p, OfflinePlayer player, Nick nick) {
+        if (player.isOnline()) {
+            main.set((Player) player, nick);
         }
         messenger.send(p, "success", "§a操作成功");
     }

@@ -14,7 +14,7 @@ public class Nick {
     @Id
     private UUID id;
 
-    @Column(length = 15)
+    @Column(length = 16)
     private String name;
 
     @Column(unique = true)
