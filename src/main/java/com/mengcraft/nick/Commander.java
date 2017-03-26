@@ -1,5 +1,7 @@
 package com.mengcraft.nick;
 
+import lombok.val;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -11,8 +13,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
+import static com.mengcraft.nick.Main.nil;
 import static java.util.Arrays.asList;
 import static org.bukkit.ChatColor.stripColor;
 
@@ -28,7 +32,7 @@ public class Commander implements CommandExecutor {
 
     public Commander(Main main) {
         this.main = main;
-        title = Title.of(main);
+        title = Title.build(main);
         messenger = new Messenger(main);
     }
 
@@ -50,6 +54,8 @@ public class Commander implements CommandExecutor {
                 return allow(p, it);
             } else if (eq(next, "reload")) {
                 return reload(p);
+            } else if (eq(next, "set-fmt")) {
+                return setFmt(p, it);
             }
         } else {
             sendMessage(p);
@@ -75,7 +81,7 @@ public class Commander implements CommandExecutor {
                         "§a你有五分钟的时间来修改",
                         "§a将会保留最后设置的昵称"
                 );
-                messenger.sendList((Player) target, "allow.notify", list);
+                messenger.send((Player) target, "allow.notify", ListHelper.join(list, "\n"));
                 title.send((Player) target, new TitleEntry(
                         messenger.find("allow.main", "§a你获得了修改昵称的权限"),
                         messenger.find("allow.sub", "§a你有300秒的时间")
@@ -101,6 +107,59 @@ public class Commander implements CommandExecutor {
         return false;
     }
 
+    <T> T[] asArray(T... i) {
+        return i;
+    }
+
+    boolean setFmt(CommandSender p, Iterator<String> i) {
+        if (!p.hasPermission("nick.admin")) return false;
+
+        if (!i.hasNext()) {
+            p.sendMessage(asArray("* 下列格式代码可组合使用",
+                    "- r §r取消",
+                    "- b §b粗体",
+                    "- o §o斜体",
+                    "- m §m中线",
+                    "- n §n下线")
+            );
+            return false;
+        }
+
+        val l = i.next();
+        Player who;
+        if (i.hasNext()) {
+            who = Bukkit.getPlayerExact(l);
+            if (nil(who)) throw new IllegalStateException("offline");
+        } else {
+            who = (Player) p;
+        }
+        int idx = l.length();
+        val fmt = new StringBuilder();
+        while (idx-- > 0) {
+            val cod = l.charAt(idx);
+            if (cod == 'r') {
+                fmt.setLength((idx = 0));
+            } else {
+                val col = ChatColor.getByChar(cod);
+                if (nil(col) || !col.isFormat()) throw new IllegalArgumentException("fmt");
+                fmt.append(col);
+            }
+        }
+
+        val get = main.get(who);
+        main.execute(() -> {
+            val nick = nil(get) ? main.fetch(who) : get;
+            nick.setFmt(fmt.toString());
+            main.save(nick);
+            main.process(() -> {
+                if (who.isOnline()) main.set(who, nick);
+            });
+            messenger.send(p, "success", "§a操作成功");
+        });
+
+        return true;
+    }
+
     private boolean setColor(CommandSender p, Iterator<String> it) {
         if (it.hasNext()) {
             ChatColor color = ChatColor.valueOf(it.next().toUpperCase());
@@ -116,7 +175,7 @@ public class Commander implements CommandExecutor {
     }
 
     private boolean setColor(CommandSender p, String next, ChatColor color) {
-        boolean b = p.hasPermission("color.admin");
+        boolean b = p.hasPermission("nick.admin");
         if (b) {
             setColor(p, color, main.getServer().getOfflinePlayer(next));
         }
@@ -124,7 +183,7 @@ public class Commander implements CommandExecutor {
     }
 
     private boolean setColor(CommandSender p, ChatColor color) {
-        boolean b = p instanceof Player && p.hasPermission("color.set.color");
+        boolean b = p instanceof Player && p.hasPermission("nick.set.color");
         if (b) {
             setColor(p, color, (Player) p);
         }
@@ -206,6 +265,7 @@ public class Commander implements CommandExecutor {
                 p.sendMessage("§6/nick set <nick> <player>");
                 p.sendMessage("§6/nick allow <player>");
                 p.sendMessage("§6/nick set-color <color> <player>");
+                p.sendMessage("§6/nick set-fmt <fmt> <player>");
             }
             if (p.hasPermission("nick.set.color")) {
                 p.sendMessage("§6/nick set-color <color>");
@@ -221,7 +281,7 @@ public class Commander implements CommandExecutor {
     }
 
     private boolean eq(Object i, Object j) {
-        return i == j || (i != null && i.equals(j));
+        return Objects.equals(i, j);
     }
 
 }

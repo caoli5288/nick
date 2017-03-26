@@ -46,7 +46,7 @@ public interface Title {
 
     void send(Player p, TitleEntry entry);
 
-    static Title of(Plugin plugin) {
+    static Title build(Plugin plugin) {
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("js");
         try {
             engine.put("version", plugin.getServer().getClass().getName().split("\\.")[3]);

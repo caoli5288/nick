@@ -1,5 +1,8 @@
 package com.mengcraft.nick;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -8,59 +11,30 @@ import java.util.UUID;
 /**
  * Created on 16-5-6.
  */
-@Entity
-public class Nick {
+@Entity @Getter @Setter public class Nick {
 
     @Id
     private UUID id;
 
-    @Column(length = 16)
+    @Column(nullable = false)
     private String name;
 
     @Column(unique = true)
     private String nick;
 
-    @Column(length = 2)
+    private String fmt;
     private String color;
 
-    public UUID getId() {
-        return id;
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getNick() {
-        return nick;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public boolean hasColor() {
-        return getColor() != null;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public void setNick(String nick) {
-        this.nick = nick;
-    }
-
-    public boolean hasNick() {
-        return getNick() != null;
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) return false;
+        if (this == o) return true;
+        return getClass() == o.getClass() && id.equals(((Nick) o).id);
     }
 
 }

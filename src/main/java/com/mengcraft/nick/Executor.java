@@ -6,6 +6,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import static com.mengcraft.nick.Main.nil;
+
 /**
  * Created on 16-5-6.
  */
@@ -38,7 +40,7 @@ public class Executor implements Listener {
     }
 
     private void process(Player p, Nick nick) {
-        if (p.isOnline() && nick.hasNick()) {
+        if (p.isOnline() && !nil(nick.getNick())) {
             main.set(p, nick);
         }
     }

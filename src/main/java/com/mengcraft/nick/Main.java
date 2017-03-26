@@ -2,6 +2,7 @@ package com.mengcraft.nick;
 
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import lombok.val;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -58,7 +59,7 @@ public class Main extends JavaPlugin implements NickManager {
 
         Plugin p1 = getServer().getPluginManager().getPlugin("Vault");
         if (p1 != null) {
-            VaultPrefix.INSTANCE.setChat(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
+            VaultP.bind(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
         }
 
         Plugin p2 = getServer().getPluginManager().getPlugin("TagAPI");
@@ -99,16 +100,14 @@ public class Main extends JavaPlugin implements NickManager {
     }
 
     public Nick fetch(OfflinePlayer p) {
-        Nick fetched = getDatabase().find(Nick.class, p.getUniqueId());
-        Nick nick;
+        val fetched = getDatabase().find(Nick.class, p.getUniqueId());
         if (fetched == null) {
-            nick = getDatabase().createEntityBean(Nick.class);
-            nick.setId(p.getUniqueId());
-            nick.setName(p.getName());
-        } else {
-            nick = fetched;
+            val ank = getDatabase().createEntityBean(Nick.class);
+            ank.setId(p.getUniqueId());
+            ank.setName(p.getName());
+            return ank;
         }
-        return nick;
+        return fetched;
     }
 
     public boolean check(String nick) {
@@ -147,21 +146,26 @@ public class Main extends JavaPlugin implements NickManager {
             }
             set.remove(p.getUniqueId());
         } else {
-            StringBuilder b = new StringBuilder();
-            b.append(prefix);
-            b.append("§r");
-            if (nick.hasColor() && (coloured || color)) {
-                b.append(nick.getColor());
+            StringBuilder buf = new StringBuilder();
+            buf.append(prefix);
+            buf.append("§r");
+            val fmt = nick.getFmt();
+            if (!nil(fmt)) buf.append(fmt);
+
+            val col = nick.getColor();
+            if (!nil(col) && (coloured || color)) {
+                buf.append(nick.getColor());
             }
 
-            b.append(nick.getNick());
-            b.append("§r");
+            buf.append(nick.getNick());
+            buf.append("§r");
 
-            String fin = b.toString();
+            val fin = buf.toString();
             p.setDisplayName(fin);
             if (getConfig().getBoolean("modify.tab")) {
-                p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', VaultPrefix.INSTANCE.getPrefix(p)) + fin);
+                p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', VaultP.get(p)) + fin);
             }
+
             p.setCustomName(fin);
             set.put(p.getUniqueId(), nick);
         }
@@ -192,8 +196,12 @@ public class Main extends JavaPlugin implements NickManager {
         return getServer().getOnlinePlayers();
     }
 
-    public static boolean eq(Object i, Object j) {
-        return i == j || (i != null && i.equals(j));
+    public static boolean nil(Object any) {
+        return any == null;
+    }
+
+    public static void valid(boolean b, String message) {
+        if (b) throw new IllegalStateException(message);
     }
 
 }
