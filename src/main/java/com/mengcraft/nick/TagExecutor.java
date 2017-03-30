@@ -1,5 +1,6 @@
 package com.mengcraft.nick;
 
+import lombok.val;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,14 +20,15 @@ public class TagExecutor implements Listener {
 
     @EventHandler
     public void handle(AsyncPlayerReceiveNameTagEvent event) {
-        Player target = event.getNamedPlayer();
-        if (target.getCustomName() != null) {
+        val target = event.getNamedPlayer();
+        val name = target.getCustomName();
+        if (!$.nil(name)) {
             event.setTag(target.getCustomName());
         }
     }
 
     public static void f5(Player p) {
-        if (instance != null) {
+        if (!$.nil(instance)) {
             TagAPI.refreshPlayer(p);
         }
     }

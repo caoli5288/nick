@@ -22,7 +22,10 @@ import java.util.UUID;
     @Column(unique = true)
     private String nick;
 
+    @Column(nullable = false)
     private String fmt;
+
+    @Column(nullable = false)
     private String color;
 
     @Override

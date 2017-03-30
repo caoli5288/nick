@@ -4,7 +4,7 @@ import lombok.val;
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.entity.Player;
 
-import static com.mengcraft.nick.Main.nil;
+import static com.mengcraft.nick.$.nil;
 
 /**
  * Created on 16-8-19.
@@ -26,7 +26,7 @@ public class VaultP {
     }
 
     static void bind(Chat chat) {
-        Main.valid(Main.nil(chat), "null");
+        $.valid($.nil(chat), "null");
         VaultP.chat = chat;
     }
 

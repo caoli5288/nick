@@ -54,7 +54,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 
-public class MetricsLite {
+public class MLite {
 
     /**
      * The current revision number
@@ -111,7 +111,7 @@ public class MetricsLite {
      */
     private volatile BukkitTask task = null;
 
-    public MetricsLite(Plugin plugin) {
+    public MLite(Plugin plugin) {
         if (plugin == null) {
             throw new IllegalArgumentException("Plugin cannot be null");
         }

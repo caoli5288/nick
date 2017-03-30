@@ -6,7 +6,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import static com.mengcraft.nick.Main.nil;
+import static com.mengcraft.nick.$.nil;
 
 /**
  * Created on 16-5-6.

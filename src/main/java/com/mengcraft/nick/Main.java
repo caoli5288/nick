@@ -57,13 +57,13 @@ public class Main extends JavaPlugin implements NickManager {
         pattern = Pattern.compile(getConfig().getString("nick.allow", "[\\u4E00-\\u9FA5]+"));
         blockList = getConfig().getStringList("nick.block");
 
-        Plugin p1 = getServer().getPluginManager().getPlugin("Vault");
-        if (p1 != null) {
+        Plugin vault = getServer().getPluginManager().getPlugin("Vault");
+        if (!$.nil(vault)) {
             VaultP.bind(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
         }
 
-        Plugin p2 = getServer().getPluginManager().getPlugin("TagAPI");
-        if (p2 != null && getConfig().getBoolean("modify.tag")) {
+        Plugin tag = getServer().getPluginManager().getPlugin("TagAPI");
+        if (!$.nil(tag) && getConfig().getBoolean("modify.tag")) {
             getServer().getPluginManager().registerEvents(new TagExecutor(), this);
         }
 
@@ -80,7 +80,7 @@ public class Main extends JavaPlugin implements NickManager {
                 this,
                 ServicePriority.Normal);
 
-        new MetricsLite(this).start();
+        new MLite(this).start();
     }
 
     @Override
@@ -149,15 +149,15 @@ public class Main extends JavaPlugin implements NickManager {
             StringBuilder buf = new StringBuilder();
             buf.append(prefix);
             buf.append("§r");
-            val fmt = nick.getFmt();
-            if (!nil(fmt)) buf.append(fmt);
 
-            val col = nick.getColor();
-            if (!nil(col) && (coloured || color)) {
+            if (coloured || color) {
                 buf.append(nick.getColor());
             }
 
+            val fmt = $.fmt2Col(nick.getFmt());
+            buf.append(fmt);
             buf.append(nick.getNick());
+
             buf.append("§r");
 
             val fin = buf.toString();
@@ -192,16 +192,8 @@ public class Main extends JavaPlugin implements NickManager {
         getDatabase().save(nick);
     }
 
-    public Collection<? extends Player> getOnline() {
+    public Collection<? extends Player> getAll() {
         return getServer().getOnlinePlayers();
-    }
-
-    public static boolean nil(Object any) {
-        return any == null;
-    }
-
-    public static void valid(boolean b, String message) {
-        if (b) throw new IllegalStateException(message);
     }
 
 }

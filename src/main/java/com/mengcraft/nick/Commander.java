@@ -16,8 +16,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.mengcraft.nick.Main.nil;
+import static com.mengcraft.nick.$.nil;
 import static java.util.Arrays.asList;
+import static org.bukkit.ChatColor.RESET;
 import static org.bukkit.ChatColor.stripColor;
 
 /**
@@ -96,9 +97,9 @@ public class Commander implements CommandExecutor {
         if (it.hasNext()) {
             String next = it.next();
             int i = 1;
-            for (Player target : main.getOnline()) {
+            for (Player target : main.getAll()) {
                 String custom = target.getCustomName();
-                if (custom != null && stripColor(custom).contains(next)) {
+                if (!$.nil(custom) && stripColor(custom).contains(next)) {
                     p.sendMessage("§6 >" + (i++) + " 玩家 §r" + custom + " §6原id §r" + target.getName());
                 }
             }
@@ -117,7 +118,7 @@ public class Commander implements CommandExecutor {
         if (!i.hasNext()) {
             p.sendMessage(asArray("* 下列格式代码可组合使用",
                     "- r §r取消",
-                    "- b §b粗体",
+                    "- l §l粗体",
                     "- o §o斜体",
                     "- m §m中线",
                     "- n §n下线")
@@ -128,28 +129,31 @@ public class Commander implements CommandExecutor {
         val l = i.next();
         Player who;
         if (i.hasNext()) {
-            who = Bukkit.getPlayerExact(l);
+            who = Bukkit.getPlayerExact(i.next());
             if (nil(who)) throw new IllegalStateException("offline");
         } else {
             who = (Player) p;
         }
+        val out = new StringBuilder();
         int idx = l.length();
-        val fmt = new StringBuilder();
-        while (idx-- > 0) {
-            val cod = l.charAt(idx);
-            if (cod == 'r') {
-                fmt.setLength((idx = 0));
+        while (--idx > -1) {
+            val fmt = l.charAt(idx);
+            if (fmt == 'r') {
+                out.setLength((idx = 0));
             } else {
-                val col = ChatColor.getByChar(cod);
-                if (nil(col) || !col.isFormat()) throw new IllegalArgumentException("fmt");
-                fmt.append(col);
+                $.validFmt(fmt);
+                out.append(fmt);
             }
         }
 
         val get = main.get(who);
         main.execute(() -> {
             val nick = nil(get) ? main.fetch(who) : get;
-            nick.setFmt(fmt.toString());
+            if (out.length() == 0) {
+                nick.setFmt("");
+            } else {
+                nick.setFmt($.mix2Fmt(nick.getFmt(), out.toString()));
+            }
             main.save(nick);
             main.process(() -> {
                 if (who.isOnline()) main.set(who, nick);
@@ -162,22 +166,22 @@ public class Commander implements CommandExecutor {
 
     private boolean setColor(CommandSender p, Iterator<String> it) {
         if (it.hasNext()) {
-            ChatColor color = ChatColor.valueOf(it.next().toUpperCase());
-            if (eq(color, null)) {
+            val col = ChatColor.valueOf(it.next().toUpperCase());
+            if (!(col == RESET) && !col.isColor()) {// RESET is  not color
                 throw new NullPointerException("color");
             }
             if (it.hasNext()) {
-                return setColor(p, it.next(), color);
+                return setColor(p, it.next(), col);
             }
-            return setColor(p, color);
+            return setColor(p, col);
         }
         return false;
     }
 
-    private boolean setColor(CommandSender p, String next, ChatColor color) {
+    private boolean setColor(CommandSender p, String who, ChatColor color) {
         boolean b = p.hasPermission("nick.admin");
         if (b) {
-            setColor(p, color, main.getServer().getOfflinePlayer(next));
+            setColor(p, color, Bukkit.getPlayerExact(who));
         }
         return b;
     }
@@ -191,10 +195,11 @@ public class Commander implements CommandExecutor {
     }
 
     private void setColor(CommandSender p, ChatColor color, OfflinePlayer target) {
+        $.valid($.nil(p), "offline");
         main.execute(() -> {
             Nick nick = main.fetch(target);
-            if (eq(color, ChatColor.RESET)) {
-                nick.setColor(null);
+            if (color == RESET) {
+                nick.setColor("");
             } else {
                 nick.setColor(color.toString());
             }
@@ -225,12 +230,13 @@ public class Commander implements CommandExecutor {
     private boolean set(CommandSender p, String nick, String name) {
         boolean b = p.hasPermission("nick.admin");
         if (b) {
-            set(p, nick, main.getServer().getOfflinePlayer(name));
+            set(p, nick, Bukkit.getPlayerExact(name));
         }
         return b;
     }
 
     private void set(CommandSender p, String nick, OfflinePlayer player) {
+        $.valid($.nil(player), "offline");
         main.execute(() -> {
             Nick entity = main.fetch(player);
             entity.setNick(nick);
