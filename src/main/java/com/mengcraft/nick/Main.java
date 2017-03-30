@@ -4,6 +4,7 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import lombok.val;
 import net.milkbowl.vault.chat.Chat;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -12,10 +13,7 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +24,10 @@ import java.util.regex.Pattern;
  */
 public class Main extends JavaPlugin implements NickManager {
 
-    private final Map<UUID, Nick> set = new HashMap<>();
+    private List<String> blockList;
     private boolean coloured;
     private String prefix;
     private Pattern pattern;
-    private List<String> blockList;
 
     private ThreadPoolExecutor pool;
 
@@ -99,6 +96,10 @@ public class Main extends JavaPlugin implements NickManager {
         blockList = getConfig().getStringList("nick.block");
     }
 
+    public Nick get(Player p) {
+        return fetch(p);
+    }
+
     public Nick fetch(OfflinePlayer p) {
         val fetched = getDatabase().find(Nick.class, p.getUniqueId());
         if (fetched == null) {
@@ -126,31 +127,20 @@ public class Main extends JavaPlugin implements NickManager {
         return false;
     }
 
-    @Override
-    public Nick get(Player p) {
-        return set.get(p.getUniqueId());
-    }
-
     public void set(Player p, Nick nick) {
-        set(p, nick, false);
-    }
-
-    public void set(Player p, Nick nick, boolean color) {
-        if (nick == null) {
-            if (p.isOnline()) {
-                if (getConfig().getBoolean("modify.tab")) {
-                    p.setPlayerListName(null);
-                }
-                p.setCustomName(null);
-                p.setDisplayName(null);
+        $.valid(!Bukkit.isPrimaryThread(), "not primary thread");
+        if ($.nil(nick) || nick.isHide()) {
+            if (getConfig().getBoolean("modify.tab")) {
+                p.setPlayerListName(null);
             }
-            set.remove(p.getUniqueId());
+            p.setCustomName(null);
+            p.setDisplayName(null);
         } else {
             StringBuilder buf = new StringBuilder();
             buf.append(prefix);
             buf.append("§r");
 
-            if (coloured || color) {
+            if (coloured) {
                 buf.append(nick.getColor());
             }
 
@@ -167,20 +157,15 @@ public class Main extends JavaPlugin implements NickManager {
             }
 
             p.setCustomName(fin);
-            set.put(p.getUniqueId(), nick);
         }
         TagExecutor.f5(p);
     }
 
-    protected void quit(Player p) {
-        set.remove(p.getUniqueId());
-    }
-
-    public void execute(Runnable task) {
+    public void exec(Runnable task) {
         pool.execute(task);
     }
 
-    public void process(Runnable task, int i) {
+    public void process(int i, Runnable task) {
         getServer().getScheduler().runTaskLater(this, task, i);
     }
 
@@ -188,7 +173,7 @@ public class Main extends JavaPlugin implements NickManager {
         getServer().getScheduler().runTask(this, task);
     }
 
-    public void save(Object nick) {
+    public void persist(Nick nick) {
         getDatabase().save(nick);
     }
 

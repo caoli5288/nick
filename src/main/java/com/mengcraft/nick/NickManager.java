@@ -9,8 +9,8 @@ public interface NickManager {
 
     Nick get(Player p);
 
-    void set(Player p, Nick nick);
+    void persist(Nick nick);
 
-    void set(Player p, Nick nick, boolean color);
+    void set(Player p, Nick nick);
 
 }

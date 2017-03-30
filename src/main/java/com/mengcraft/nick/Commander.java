@@ -44,7 +44,7 @@ public class Commander implements CommandExecutor {
 
     private boolean execute(CommandSender p, Iterator<String> it) {
         if (it.hasNext()) {
-            String next = it.next();
+            String next = it.next().toLowerCase();
             if (eq(next, "set")) {
                 return set(p, it);
             } else if (eq(next, "set-color")) {
@@ -57,11 +57,33 @@ public class Commander implements CommandExecutor {
                 return reload(p);
             } else if (eq(next, "set-fmt")) {
                 return setFmt(p, it);
+            } else if (next.equals("show")) {
+                hide(p, false);
+                return true;
+            } else if (next.equals("hide")) {
+                hide(p, true);
+                return true;
             }
         } else {
             sendMessage(p);
         }
         return false;
+    }
+
+    private void hide(CommandSender p, boolean hide) {
+        main.exec(() -> {
+            val player = ((Player) p);
+            val nick = main.get(player);
+            $.valid($.nil(nick.getNick()), "nil");
+            if (!(nick.isHide() == hide)) {
+                nick.setHide(hide);
+                main.process(() -> {
+                    if (player.isOnline()) main.set(player, nick);
+                });
+                main.persist(nick);
+                messenger.send(p, "hide", "§a显示模式已切换");
+            }
+        });
     }
 
     private boolean reload(CommandSender p) {
@@ -76,7 +98,7 @@ public class Commander implements CommandExecutor {
             OfflinePlayer target = main.getServer().getOfflinePlayer(it.next());
             if (target.isOnline()) {
                 allowed.add(target.getUniqueId());
-                main.process(() -> allowed.remove(target.getUniqueId()), 6000);
+                main.process(6000, () -> allowed.remove(target.getUniqueId()));
                 List<String> list = Arrays.asList(
                         "§a你获得了修改昵称的权限",
                         "§a你有五分钟的时间来修改",
@@ -147,14 +169,14 @@ public class Commander implements CommandExecutor {
         }
 
         val get = main.get(who);
-        main.execute(() -> {
+        main.exec(() -> {
             val nick = nil(get) ? main.fetch(who) : get;
             if (out.length() == 0) {
                 nick.setFmt("");
             } else {
                 nick.setFmt($.mix2Fmt(nick.getFmt(), out.toString()));
             }
-            main.save(nick);
+            main.persist(nick);
             main.process(() -> {
                 if (who.isOnline()) main.set(who, nick);
             });
@@ -196,14 +218,14 @@ public class Commander implements CommandExecutor {
 
     private void setColor(CommandSender p, ChatColor color, OfflinePlayer target) {
         $.valid($.nil(p), "offline");
-        main.execute(() -> {
+        main.exec(() -> {
             Nick nick = main.fetch(target);
             if (color == RESET) {
                 nick.setColor("");
             } else {
                 nick.setColor(color.toString());
             }
-            main.save(nick);
+            main.persist(nick);
             main.process(() -> {
                 if (target.isOnline()) main.set((Player) target, nick);
             });
@@ -237,14 +259,14 @@ public class Commander implements CommandExecutor {
 
     private void set(CommandSender p, String nick, OfflinePlayer player) {
         $.valid($.nil(player), "offline");
-        main.execute(() -> {
+        main.exec(() -> {
             Nick entity = main.fetch(player);
             entity.setNick(nick);
 
             main.getDatabase().beginTransaction();
 
             try {
-                main.save(entity);
+                main.persist(entity);
                 main.getDatabase().commitTransaction();
                 main.process(() -> set(p, player, entity));
             } catch (Exception e) {
@@ -276,6 +298,8 @@ public class Commander implements CommandExecutor {
             if (p.hasPermission("nick.set.color")) {
                 p.sendMessage("§6/nick set-color <color>");
             }
+            p.sendMessage("§6/nick show");
+            p.sendMessage("§6/nick hide");
         } else {
             p.sendMessage("§6/nick set <nick> <player>");
             p.sendMessage("§6/nick allow <player>");

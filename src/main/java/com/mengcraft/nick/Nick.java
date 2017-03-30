@@ -6,6 +6,7 @@ import lombok.Setter;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.util.UUID;
 
 /**
@@ -27,6 +28,8 @@ import java.util.UUID;
 
     @Column(nullable = false)
     private String color;
+
+    private boolean hide;
 
     @Override
     public int hashCode() {
