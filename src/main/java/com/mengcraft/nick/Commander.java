@@ -27,11 +27,11 @@ import static org.bukkit.ChatColor.stripColor;
 public class Commander implements CommandExecutor {
 
     private final List<UUID> allowed = new ArrayList<>();
-    private final Main main;
+    private final NickPlugin main;
     private final Title title;
     private final Messenger messenger;
 
-    public Commander(Main main) {
+    public Commander(NickPlugin main) {
         this.main = main;
         title = Title.build(main);
         messenger = new Messenger(main);
@@ -170,7 +170,7 @@ public class Commander implements CommandExecutor {
 
         val get = main.get(who);
         main.exec(() -> {
-            val nick = nil(get) ? main.fetch(who) : get;
+            val nick = nil(get) ? main.get(who) : get;
             if (out.length() == 0) {
                 nick.setFmt("");
             } else {
@@ -219,7 +219,7 @@ public class Commander implements CommandExecutor {
     private void setColor(CommandSender p, ChatColor color, OfflinePlayer target) {
         $.valid($.nil(p), "offline");
         main.exec(() -> {
-            Nick nick = main.fetch(target);
+            Nick nick = main.get(target);
             if (color == RESET) {
                 nick.setColor("");
             } else {
@@ -260,7 +260,7 @@ public class Commander implements CommandExecutor {
     private void set(CommandSender p, String nick, OfflinePlayer player) {
         $.valid($.nil(player), "offline");
         main.exec(() -> {
-            Nick entity = main.fetch(player);
+            Nick entity = main.get(player);
             entity.setNick(nick);
 
             main.getDatabase().beginTransaction();

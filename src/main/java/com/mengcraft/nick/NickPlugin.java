@@ -13,7 +13,10 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -22,17 +25,20 @@ import java.util.regex.Pattern;
 /**
  * Created on 16-5-6.
  */
-public class Main extends JavaPlugin implements NickManager {
+public class NickPlugin extends JavaPlugin implements NickManager {
 
+    private static NickPlugin plugin;
+
+    Map<UUID, Nick> cached;
     private List<String> blockList;
     private boolean coloured;
     private String prefix;
     private Pattern pattern;
-
     private ThreadPoolExecutor pool;
 
     @Override
     public void onEnable() {
+        plugin = this;
         saveDefaultConfig();
 
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
@@ -53,6 +59,8 @@ public class Main extends JavaPlugin implements NickManager {
         prefix = getConfig().getString("prefix", "#");
         pattern = Pattern.compile(getConfig().getString("nick.allow", "[\\u4E00-\\u9FA5]+"));
         blockList = getConfig().getStringList("nick.block");
+
+        cached = new HashMap<>();
 
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
         if (!$.nil(vault)) {
@@ -84,6 +92,7 @@ public class Main extends JavaPlugin implements NickManager {
     public void onDisable() {
         try {
             pool.shutdown();
+            pool.awaitTermination(1, TimeUnit.MINUTES);
         } catch (Exception e) {
         }
     }
@@ -96,19 +105,27 @@ public class Main extends JavaPlugin implements NickManager {
         blockList = getConfig().getStringList("nick.block");
     }
 
-    public Nick get(Player p) {
-        return fetch(p);
+    @Override
+    public Nick get(OfflinePlayer p) {
+        Nick out = getDatabase().find(Nick.class, p.getUniqueId());
+        if ($.nil(out)) {
+            out = getDatabase().createEntityBean(Nick.class);
+            out.setId(p.getUniqueId());
+            out.setName(p.getName());
+            out.setFmt("");
+            out.setColor("");
+        }
+        cached.put(p.getUniqueId(), out);
+        return out;
     }
 
-    public Nick fetch(OfflinePlayer p) {
-        val fetched = getDatabase().find(Nick.class, p.getUniqueId());
-        if (fetched == null) {
-            val ank = getDatabase().createEntityBean(Nick.class);
-            ank.setId(p.getUniqueId());
-            ank.setName(p.getName());
-            return ank;
+    @Override
+    public Nick get(OfflinePlayer p, boolean fetch) {
+        val nik = cached.get(p.getUniqueId());
+        if ($.nil(nik) && fetch) {
+            return get(p);
         }
-        return fetched;
+        return nik;
     }
 
     public boolean check(String nick) {
@@ -127,8 +144,8 @@ public class Main extends JavaPlugin implements NickManager {
         return false;
     }
 
-    public void set(Player p, Nick nick) {
-        $.valid(!Bukkit.isPrimaryThread(), "not primary thread");
+    public void set(Player p, Nick nick, boolean fc) {
+        $.valid(!Bukkit.isPrimaryThread(), "PRIMARY ONLY");
         if ($.nil(nick) || nick.isHide()) {
             if (getConfig().getBoolean("modify.tab")) {
                 p.setPlayerListName(null);
@@ -140,7 +157,7 @@ public class Main extends JavaPlugin implements NickManager {
             buf.append(prefix);
             buf.append("§r");
 
-            if (coloured) {
+            if (fc || coloured) {
                 buf.append(nick.getColor());
             }
 
@@ -161,6 +178,10 @@ public class Main extends JavaPlugin implements NickManager {
         TagExecutor.f5(p);
     }
 
+    public void set(Player p, Nick nick) {
+        set(p, nick, false);
+    }
+
     public void exec(Runnable task) {
         pool.execute(task);
     }
@@ -175,6 +196,10 @@ public class Main extends JavaPlugin implements NickManager {
 
     public void persist(Nick nick) {
         getDatabase().save(nick);
+    }
+
+    public static NickManager getNickManager() {
+        return plugin;
     }
 
     public Collection<? extends Player> getAll() {

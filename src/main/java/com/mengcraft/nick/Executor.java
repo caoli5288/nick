@@ -5,6 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import static com.mengcraft.nick.$.nil;
 
@@ -13,9 +14,9 @@ import static com.mengcraft.nick.$.nil;
  */
 public class Executor implements Listener {
 
-    private final Main main;
+    private final NickPlugin main;
 
-    public Executor(Main main) {
+    public Executor(NickPlugin main) {
         this.main = main;
     }
 
@@ -28,8 +29,13 @@ public class Executor implements Listener {
         });
     }
 
+    @EventHandler
+    public void handle(PlayerQuitEvent event) {
+        main.cached.remove(event.getPlayer().getUniqueId());
+    }
+
     private void fetch(Player p) {
-        Nick nick = main.fetch(p);
+        Nick nick = main.get(p);
         main.process(() -> {
             if (p.isOnline()) {
                 NickFetchedEvent event = NickFetchedEvent.call(p, nick);

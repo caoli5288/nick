@@ -1,5 +1,5 @@
 name: Nick
-main: com.mengcraft.nick.Main
+main: com.mengcraft.nick.NickPlugin
 version: ${project.version}
 author: caoli5288
 
