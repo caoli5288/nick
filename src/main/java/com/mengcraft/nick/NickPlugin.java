@@ -4,6 +4,8 @@ import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import lombok.val;
 import net.milkbowl.vault.chat.Chat;
+import org.black_ixx.playerpoints.PlayerPoints;
+import org.black_ixx.playerpoints.PlayerPointsAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -20,7 +22,10 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
+
+import static com.mengcraft.nick.$.nil;
 
 /**
  * Created on 16-5-6.
@@ -35,6 +40,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     private String prefix;
     private Pattern pattern;
     private ThreadPoolExecutor pool;
+    IPoint point;
 
     @Override
     public void onEnable() {
@@ -63,13 +69,20 @@ public class NickPlugin extends JavaPlugin implements NickManager {
         cached = new HashMap<>();
 
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
-        if (!$.nil(vault)) {
+        if (!nil(vault)) {
             VaultP.bind(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
         }
 
         Plugin tag = getServer().getPluginManager().getPlugin("TagAPI");
-        if (!$.nil(tag) && getConfig().getBoolean("modify.tag")) {
+        if (!nil(tag) && getConfig().getBoolean("modify.tag")) {
             getServer().getPluginManager().registerEvents(new TagExecutor(), this);
+        }
+
+        Plugin p = getServer().getPluginManager().getPlugin("PlayerPoints");
+        if (!nil(p)) {
+            PlayerPointsAPI api = ((PlayerPoints) p).getAPI();
+            point = (who, value) -> value > 0 ? api.take(who.getUniqueId(), value) : api.give(who.getUniqueId(), value);
+            getLogger().log(Level.INFO, "关联到点券插件");
         }
 
         getServer().getPluginManager().registerEvents(new Executor(this), this);
@@ -108,7 +121,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     @Override
     public Nick get(OfflinePlayer p) {
         Nick out = getDatabase().find(Nick.class, p.getUniqueId());
-        if ($.nil(out)) {
+        if (nil(out)) {
             out = getDatabase().createEntityBean(Nick.class);
             out.setId(p.getUniqueId());
             out.setName(p.getName());
@@ -122,7 +135,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     @Override
     public Nick get(OfflinePlayer p, boolean fetch) {
         val nik = cached.get(p.getUniqueId());
-        if ($.nil(nik) && fetch) {
+        if (nil(nik) && fetch) {
             return get(p);
         }
         return nik;
@@ -146,7 +159,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
     public void set(Player p, Nick nick, boolean fc) {
         $.valid(!Bukkit.isPrimaryThread(), "PRIMARY ONLY");
-        if ($.nil(nick) || nick.isHide()) {
+        if (nil(nick) || nick.isHide()) {
             if (getConfig().getBoolean("modify.tab")) {
                 p.setPlayerListName(null);
             }

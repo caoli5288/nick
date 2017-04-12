@@ -1,4 +1,6 @@
 prefix: '#'
+set:
+  price: 500
 modify:
   tab: true
   tag: true

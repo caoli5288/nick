@@ -8,4 +8,4 @@ commands:
     description: None.
 
 depend: [SimpleORM]
-softdepend: [Vault, TagAPI]
+softdepend: [Vault, TagAPI, PlayerPoints]

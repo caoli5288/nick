@@ -30,11 +30,13 @@ public class Commander implements CommandExecutor {
     private final NickPlugin main;
     private final Title title;
     private final Messenger messenger;
+    private final int value;
 
     public Commander(NickPlugin main) {
         this.main = main;
         title = Title.build(main);
         messenger = new Messenger(main);
+        value = main.getConfig().getInt("set.price");
     }
 
     @Override
@@ -238,9 +240,9 @@ public class Commander implements CommandExecutor {
             String nick = it.next();
             if (it.hasNext()) {
                 return set(p, nick, it.next());
-            } else if (p instanceof Player && hasSetPermission(p)) {
+            } else if (p instanceof Player) {
                 if (main.check(nick)) {
-                    set(p, nick, (Player) p);
+                    set(p, nick, (Player) p, hasSetPermission(p));
                 } else {
                     p.sendMessage("§c设置失败，可能存在不允许的字符");
                 }
@@ -252,27 +254,30 @@ public class Commander implements CommandExecutor {
     private boolean set(CommandSender p, String nick, String name) {
         boolean b = p.hasPermission("nick.admin");
         if (b) {
-            set(p, nick, Bukkit.getPlayerExact(name));
+            set(p, nick, Bukkit.getPlayerExact(name), true);
         }
         return b;
     }
 
-    private void set(CommandSender p, String nick, OfflinePlayer player) {
+    private void set(CommandSender p, String nick, OfflinePlayer player, boolean free) {
         $.valid($.nil(player), "offline");
-        main.exec(() -> {
-            Nick entity = main.get(player);
-            entity.setNick(nick);
+        if (!free && nil(main.point)) {
+            p.sendMessage(ChatColor.RED + "你并没有设置昵称的权限");
+        } else main.exec(() -> {
+            if (!free && !main.point.take(((Player) p), value)) {
+                p.sendMessage(ChatColor.RED + "你的点券余额不足");
+            } else {
+                Nick entity = main.get(player);
+                entity.setNick(nick);
 
-            main.getDatabase().beginTransaction();
-
-            try {
-                main.persist(entity);
-                main.getDatabase().commitTransaction();
-                main.process(() -> set(p, player, entity));
-            } catch (Exception e) {
-                p.sendMessage("§c设置失败，可能存在重名");
-            } finally {
-                main.getDatabase().endTransaction();
+                try {
+                    main.persist(entity);
+                    main.getDatabase().commitTransaction();
+                    main.process(() -> set(p, player, entity));
+                } catch (Exception e) {
+                    p.sendMessage("§c设置失败，可能存在重名");
+                    if (!free) main.point.take(((Player) p), -value);
+                }
             }
         });
     }
@@ -286,7 +291,7 @@ public class Commander implements CommandExecutor {
 
     private void sendMessage(CommandSender p) {
         if (p instanceof Player) {
-            if (hasSetPermission(p)) {
+            if (!nil(main.point) || hasSetPermission(p)) {
                 p.sendMessage("§6/nick set <nick>");
             }
             if (p.hasPermission("nick.admin")) {
