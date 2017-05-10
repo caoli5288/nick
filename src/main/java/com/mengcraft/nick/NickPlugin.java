@@ -70,7 +70,8 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
         if (!nil(vault)) {
-            VaultP.bind(getServer().getServicesManager().getRegistration(Chat.class).getProvider());
+            val provider = getServer().getServicesManager().getRegistration(Chat.class);
+            if (!nil(provider)) VaultP.bind(provider.getProvider());
         }
 
         Plugin tag = getServer().getPluginManager().getPlugin("TagAPI");
