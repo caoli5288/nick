@@ -160,7 +160,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
     public void set(Player p, Nick nick, boolean fc) {
         $.valid(!Bukkit.isPrimaryThread(), "PRIMARY ONLY");
-        if (nil(nick) || nick.isHide()) {
+        if (nil(nick) || nil(nick.getNick()) || nick.isHide()) {
             if (getConfig().getBoolean("modify.tab")) {
                 p.setPlayerListName(null);
             }
