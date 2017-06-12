@@ -79,7 +79,7 @@ public class Commander implements CommandExecutor {
             $.valid($.nil(nick.getNick()), "nil");
             if (!(nick.isHide() == hide)) {
                 nick.setHide(hide);
-                main.process(() -> {
+                main.run(() -> {
                     if (player.isOnline()) main.set(player, nick);
                 });
                 main.persist(nick);
@@ -100,7 +100,7 @@ public class Commander implements CommandExecutor {
             OfflinePlayer target = main.getServer().getOfflinePlayer(it.next());
             if (target.isOnline()) {
                 allowed.add(target.getUniqueId());
-                main.process(6000, () -> allowed.remove(target.getUniqueId()));
+                main.run(6000, () -> allowed.remove(target.getUniqueId()));
                 List<String> list = Arrays.asList(
                         "§a你获得了修改昵称的权限",
                         "§a你有五分钟的时间来修改",
@@ -179,7 +179,7 @@ public class Commander implements CommandExecutor {
                 nick.setFmt($.mix2Fmt(nick.getFmt(), out.toString()));
             }
             main.persist(nick);
-            main.process(() -> {
+            main.run(() -> {
                 if (who.isOnline()) main.set(who, nick);
             });
             messenger.send(p, "success", "§a操作成功");
@@ -228,7 +228,7 @@ public class Commander implements CommandExecutor {
                 nick.setColor(color.toString());
             }
             main.persist(nick);
-            main.process(() -> {
+            main.run(() -> {
                 if (target.isOnline()) main.set((Player) target, nick);
             });
             messenger.send(p, "success", "§a操作成功");
@@ -242,7 +242,7 @@ public class Commander implements CommandExecutor {
                 return set(p, nick, it.next());
             } else if (p instanceof Player) {
                 if (main.check(nick)) {
-                    set(p, nick, (Player) p, hasSetPermission(p));
+                    set(p, nick, (Player) p, hadSetPermission(p));
                 } else {
                     p.sendMessage("§c设置失败，可能存在不允许的字符");
                 }
@@ -252,31 +252,30 @@ public class Commander implements CommandExecutor {
     }
 
     private boolean set(CommandSender p, String nick, String name) {
-        boolean b = p.hasPermission("nick.admin");
-        if (b) {
+        if (p.hasPermission("nick.admin")) {
             set(p, nick, Bukkit.getPlayerExact(name), true);
+            return true;
         }
-        return b;
+        return false;
     }
 
     private void set(CommandSender p, String nick, OfflinePlayer player, boolean free) {
         $.valid($.nil(player), "offline");
         if (!free && nil(main.point)) {
-            p.sendMessage(ChatColor.RED + "你并没有设置昵称的权限");
+            p.sendMessage(ChatColor.RED + "你没有权限");
         } else main.exec(() -> {
             if (!free && !main.point.take(((Player) p), value)) {
                 p.sendMessage(ChatColor.RED + "你的点券余额不足");
             } else {
                 Nick entity = main.get(player);
                 entity.setNick(nick);
-
                 try {
                     main.persist(entity);
-                    main.getDatabase().commitTransaction();
-                    main.process(() -> set(p, player, entity));
+                    main.run(() -> set(p, player, entity));
                 } catch (Exception e) {
                     p.sendMessage("§c设置失败，可能存在重名");
-                    if (!free) main.point.take(((Player) p), -value);
+//                    NickPlugin.log(e);
+                    if (!free) main.point.give(((Player) p), value);
                 }
             }
         });
@@ -284,14 +283,14 @@ public class Commander implements CommandExecutor {
 
     private void set(CommandSender p, OfflinePlayer player, Nick nick) {
         if (player.isOnline()) {
-            main.set((Player) player, nick);
+            main.set(player.getPlayer(), nick);
         }
         messenger.send(p, "success", "§a操作成功");
     }
 
     private void sendMessage(CommandSender p) {
         if (p instanceof Player) {
-            if (!nil(main.point) || hasSetPermission(p)) {
+            if (!nil(main.point) || hadSetPermission(p)) {
                 p.sendMessage("§6/nick set <nick>");
             }
             if (p.hasPermission("nick.admin")) {
@@ -311,7 +310,7 @@ public class Commander implements CommandExecutor {
         }
     }
 
-    private boolean hasSetPermission(CommandSender p) {
+    private boolean hadSetPermission(CommandSender p) {
         return allowed.contains(((Player) p).getUniqueId()) || p.hasPermission("nick.set");
     }
 

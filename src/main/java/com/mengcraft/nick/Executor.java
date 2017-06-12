@@ -22,7 +22,7 @@ public class Executor implements Listener {
 
     @EventHandler
     public void handle(PlayerJoinEvent event) {
-        main.process(20, () -> {
+        main.run(20, () -> {
             // sync
             val p = event.getPlayer();
             if (p.isOnline()) main.exec(() -> fetch(p));
@@ -36,7 +36,7 @@ public class Executor implements Listener {
 
     private void fetch(Player p) {
         Nick nick = main.get(p);
-        main.process(() -> {
+        main.run(() -> {
             if (p.isOnline()) {
                 NickFetchedEvent event = NickFetchedEvent.call(p, nick);
                 if (!event.isCancelled() && !nil(nick.getNick())) {

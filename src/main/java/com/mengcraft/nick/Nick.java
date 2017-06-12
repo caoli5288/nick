@@ -6,13 +6,15 @@ import lombok.Setter;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import java.util.UUID;
 
 /**
  * Created on 16-5-6.
  */
-@Entity @Getter @Setter public class Nick {
+@Entity
+@Getter
+@Setter
+public class Nick {
 
     @Id
     private UUID id;

@@ -45,6 +45,8 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     @Override
     public void onEnable() {
         plugin = this;
+
+        getConfig().options().copyDefaults(true);
         saveDefaultConfig();
 
         EbeanHandler db = EbeanManager.DEFAULT.getHandler(this);
@@ -82,7 +84,21 @@ public class NickPlugin extends JavaPlugin implements NickManager {
         Plugin p = getServer().getPluginManager().getPlugin("PlayerPoints");
         if (!nil(p)) {
             PlayerPointsAPI api = ((PlayerPoints) p).getAPI();
-            point = (who, value) -> value > 0 ? api.take(who.getUniqueId(), value) : api.give(who.getUniqueId(), value);
+            point = new IPoint() {
+                @Override
+                public boolean take(OfflinePlayer who, int value) {
+                    int newValue = api.look(who.getUniqueId()) - value;
+                    if (newValue > -1) {
+                        return api.set(who.getUniqueId(), newValue);
+                    }
+                    return false;
+                }
+
+                @Override
+                public void give(OfflinePlayer who, int value) {
+                    api.give(who.getUniqueId(), value);
+                }
+            };
             getLogger().log(Level.INFO, "关联到点券插件");
         }
 
@@ -200,11 +216,11 @@ public class NickPlugin extends JavaPlugin implements NickManager {
         pool.execute(task);
     }
 
-    public void process(int i, Runnable task) {
+    public void run(int i, Runnable task) {
         getServer().getScheduler().runTaskLater(this, task, i);
     }
 
-    public void process(Runnable task) {
+    public void run(Runnable task) {
         getServer().getScheduler().runTask(this, task);
     }
 
@@ -218,6 +234,10 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
     public Collection<? extends Player> getAll() {
         return getServer().getOnlinePlayers();
+    }
+
+    public static void log(Exception e) {
+        plugin.getLogger().log(Level.SEVERE, e.toString(), e);
     }
 
 }

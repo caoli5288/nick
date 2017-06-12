@@ -8,4 +8,6 @@ import org.bukkit.OfflinePlayer;
 public interface IPoint {
 
     boolean take(OfflinePlayer who, int value);
+
+    void give(OfflinePlayer who, int value);
 }
