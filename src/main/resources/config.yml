@@ -1,5 +1,6 @@
 prefix: '#'
 set:
+  buy: false
   price: 500
 modify:
   tab: true

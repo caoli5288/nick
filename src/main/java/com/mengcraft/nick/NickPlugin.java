@@ -81,25 +81,13 @@ public class NickPlugin extends JavaPlugin implements NickManager {
             getServer().getPluginManager().registerEvents(new TagExecutor(), this);
         }
 
-        Plugin p = getServer().getPluginManager().getPlugin("PlayerPoints");
-        if (!nil(p)) {
-            PlayerPointsAPI api = ((PlayerPoints) p).getAPI();
-            point = new IPoint() {
-                @Override
-                public boolean take(OfflinePlayer who, int value) {
-                    int newValue = api.look(who.getUniqueId()) - value;
-                    if (newValue > -1) {
-                        return api.set(who.getUniqueId(), newValue);
-                    }
-                    return false;
-                }
-
-                @Override
-                public void give(OfflinePlayer who, int value) {
-                    api.give(who.getUniqueId(), value);
-                }
-            };
-            getLogger().log(Level.INFO, "关联到点券插件");
+        if (getConfig().getBoolean("set.buy")) {
+            Plugin p = getServer().getPluginManager().getPlugin("PlayerPoints");
+            if (!nil(p)) {
+                PlayerPointsAPI api = ((PlayerPoints) p).getAPI();
+                point = new IPoint.Impl(api);
+                getLogger().log(Level.INFO, "关联到点券插件");
+            }
         }
 
         getServer().getPluginManager().registerEvents(new Executor(this), this);
