@@ -14,8 +14,7 @@ public class TagExecutor implements Listener {
 
     private static TagExecutor instance;
 
-    public TagExecutor() {
-        instance = this;
+    private TagExecutor() {
     }
 
     @EventHandler
@@ -25,6 +24,12 @@ public class TagExecutor implements Listener {
         if (!$.nil(name)) {
             event.setTag(target.getCustomName());
         }
+    }
+
+    public synchronized static TagExecutor inst() {
+        if (!$.nil(instance)) throw new IllegalStateException();
+        instance = new TagExecutor();
+        return instance;
     }
 
     public static void f5(Player p) {

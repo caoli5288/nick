@@ -1,5 +1,6 @@
 package com.mengcraft.nick;
 
+import com.avaje.ebean.EbeanServer;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
 import lombok.val;
@@ -19,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -39,8 +38,8 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     private boolean coloured;
     private String prefix;
     private Pattern pattern;
-    private ThreadPoolExecutor pool;
     IPoint point;
+    private EbeanServer database;
 
     @Override
     public void onEnable() {
@@ -59,9 +58,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
             }
         }
         db.install();
-        db.reflect();
-
-        pool = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+        database = db.getServer();
 
         coloured = getConfig().getBoolean("nick.coloured");
         prefix = getConfig().getString("prefix", "#");
@@ -78,7 +75,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
         Plugin tag = getServer().getPluginManager().getPlugin("TagAPI");
         if (!nil(tag) && getConfig().getBoolean("modify.tag")) {
-            getServer().getPluginManager().registerEvents(new TagExecutor(), this);
+            getServer().getPluginManager().registerEvents(TagExecutor.inst(), this);
         }
 
         if (getConfig().getBoolean("set.buy")) {
@@ -107,15 +104,6 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     }
 
     @Override
-    public void onDisable() {
-        try {
-            pool.shutdown();
-            pool.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (Exception e) {
-        }
-    }
-
-    @Override
     public void reloadConfig() {
         super.reloadConfig();
         prefix = getConfig().getString("prefix");
@@ -125,9 +113,9 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
     @Override
     public Nick get(OfflinePlayer p) {
-        Nick out = getDatabase().find(Nick.class, p.getUniqueId());
+        Nick out = database.find(Nick.class, p.getUniqueId());
         if (nil(out)) {
-            out = getDatabase().createEntityBean(Nick.class);
+            out = database.createEntityBean(Nick.class);
             out.setId(p.getUniqueId());
             out.setName(p.getName());
             out.setFmt("");
@@ -201,7 +189,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     }
 
     public void exec(Runnable task) {
-        pool.execute(task);
+        CompletableFuture.runAsync(task);
     }
 
     public void run(int i, Runnable task) {
@@ -213,7 +201,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     }
 
     public void persist(Nick nick) {
-        getDatabase().save(nick);
+        database.save(nick);
     }
 
     public static NickManager getNickManager() {
