@@ -3,6 +3,8 @@ package com.mengcraft.nick;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.util.concurrent.Future;
+
 /**
  * Created on 16-10-20.
  */
@@ -20,6 +22,8 @@ public interface NickManager {
      * @return the nick always fetch db
      */
     Nick get(OfflinePlayer p);
+
+    Future<Nick> getAsync(OfflinePlayer p);
 
     void persist(Nick nick);
 

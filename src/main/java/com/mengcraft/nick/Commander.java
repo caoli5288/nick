@@ -28,13 +28,11 @@ public class Commander implements CommandExecutor {
 
     private final List<UUID> allowed = new ArrayList<>();
     private final NickPlugin main;
-    private final Title title;
     private final Messenger messenger;
     private final int value;
 
     public Commander(NickPlugin main) {
         this.main = main;
-        title = Title.build(main);
         messenger = new Messenger(main);
         value = main.getConfig().getInt("set.price");
     }
@@ -107,7 +105,7 @@ public class Commander implements CommandExecutor {
                         "§a将会保留最后设置的昵称"
                 );
                 messenger.send((Player) target, "allow.notify", ListHelper.join(list, "\n"));
-                title.send((Player) target, new TitleEntry(
+                Title.send((Player) target, new TitleEntry(
                         messenger.find("allow.main", "§a你获得了修改昵称的权限"),
                         messenger.find("allow.sub", "§a你有300秒的时间")
                 ));

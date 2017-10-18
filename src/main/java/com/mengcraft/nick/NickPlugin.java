@@ -1,8 +1,13 @@
 package com.mengcraft.nick;
 
 import com.avaje.ebean.EbeanServer;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.mengcraft.simpleorm.EbeanHandler;
 import com.mengcraft.simpleorm.EbeanManager;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import lombok.experimental.var;
 import lombok.val;
 import net.milkbowl.vault.chat.Chat;
 import org.black_ixx.playerpoints.PlayerPoints;
@@ -16,11 +21,10 @@ import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -33,11 +37,16 @@ public class NickPlugin extends JavaPlugin implements NickManager {
 
     private static NickPlugin plugin;
 
-    Map<UUID, Nick> cached;
     private List<String> blockList;
     private boolean coloured;
     private String prefix;
     private Pattern pattern;
+
+    final Cache<UUID, Future<Nick>> pool = CacheBuilder.newBuilder()
+            .initialCapacity(Bukkit.getMaxPlayers())
+            .build();
+
+    @Setter
     IPoint point;
     private EbeanServer database;
 
@@ -65,8 +74,6 @@ public class NickPlugin extends JavaPlugin implements NickManager {
         pattern = Pattern.compile(getConfig().getString("nick.allow", "[\\u4E00-\\u9FA5]+"));
         blockList = getConfig().getStringList("nick.block");
 
-        cached = new HashMap<>();
-
         Plugin vault = getServer().getPluginManager().getPlugin("Vault");
         if (!nil(vault)) {
             val provider = getServer().getServicesManager().getRegistration(Chat.class);
@@ -82,7 +89,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
             Plugin p = getServer().getPluginManager().getPlugin("PlayerPoints");
             if (!nil(p)) {
                 PlayerPointsAPI api = ((PlayerPoints) p).getAPI();
-                point = new IPoint.Impl(api);
+                point = new IPoint.PP(api);
                 getLogger().log(Level.INFO, "关联到点券插件");
             }
         }
@@ -112,26 +119,36 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     }
 
     @Override
+    @SneakyThrows
     public Nick get(OfflinePlayer p) {
-        Nick out = database.find(Nick.class, p.getUniqueId());
-        if (nil(out)) {
-            out = database.createEntityBean(Nick.class);
-            out.setId(p.getUniqueId());
-            out.setName(p.getName());
-            out.setFmt("");
-            out.setColor("");
-        }
-        cached.put(p.getUniqueId(), out);
-        return out;
+        return getAsync(p).get();
     }
 
     @Override
+    @SneakyThrows
+    public Future<Nick> getAsync(OfflinePlayer p) {
+        return pool.get(p.getUniqueId(), () -> CompletableFuture.supplyAsync(() -> {
+            var out = database.find(Nick.class, p.getUniqueId());
+            if (nil(out)) {
+                out = database.createEntityBean(Nick.class);
+                out.setId(p.getUniqueId());
+                out.setName(p.getName());
+                out.setFmt("");
+                out.setColor("");
+            }
+            return out;
+        }));
+    }
+
+    @Override
+    @SneakyThrows
     public Nick get(OfflinePlayer p, boolean fetch) {
-        val nik = cached.get(p.getUniqueId());
-        if (nil(nik) && fetch) {
+        if (fetch) {
             return get(p);
         }
-        return nik;
+        val fut = pool.getIfPresent(p.getUniqueId());
+        if (nil(fut)) return null;
+        return fut.get();
     }
 
     public boolean check(String nick) {

@@ -12,11 +12,11 @@ public interface IPoint {
 
     void give(OfflinePlayer who, int value);
 
-    class Impl implements IPoint {
+    class PP implements IPoint {
 
         private final PlayerPointsAPI api;
 
-        public Impl(PlayerPointsAPI api) {
+        public PP(PlayerPointsAPI api) {
             this.api = api;
         }
 
