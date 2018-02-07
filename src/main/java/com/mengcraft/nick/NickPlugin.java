@@ -1,6 +1,7 @@
 package com.mengcraft.nick;
 
 import com.avaje.ebean.EbeanServer;
+import com.avaje.ebean.Update;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.mengcraft.simpleorm.EbeanHandler;
@@ -180,7 +181,7 @@ public class NickPlugin extends JavaPlugin implements NickManager {
             buf.append(prefix);
             buf.append("§r");
 
-            if (fc || coloured) {
+            if ((fc || coloured) && !nil(nick.getColor())) {
                 buf.append(nick.getColor());
             }
 
@@ -218,7 +219,16 @@ public class NickPlugin extends JavaPlugin implements NickManager {
     }
 
     public void persist(Nick nick) {
-        database.save(nick);
+        Update<Nick> sql = database.createUpdate(Nick.class, "update nick set name = :name, nick = :nick, fmt = :fmt, color = :color, hide = :hide where id = :id")
+                .set("name", nick.getName())
+                .set("nick", nick.getNick())
+                .set("fmt", nick.getFmt())
+                .set("color", nick.getColor())
+                .set("hide", nick.isHide())
+                .set("id", nick.getId());
+        if (!(sql.execute() == 1)) {
+            database.insert(nick);
+        }
     }
 
     public static NickManager getNickManager() {

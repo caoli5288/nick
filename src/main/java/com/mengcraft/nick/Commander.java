@@ -272,7 +272,7 @@ public class Commander implements CommandExecutor {
                     main.run(() -> set(p, player, entity));
                 } catch (Exception e) {
                     p.sendMessage("§c设置失败，可能存在重名");
-//                    NickPlugin.log(e);
+                    NickPlugin.log(e);
                     if (!free) main.point.give(((Player) p), value);
                 }
             }

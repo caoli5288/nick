@@ -17,6 +17,7 @@ public class $ {
     }
 
     public static String mix2Fmt(String fmt, String add) {
+        if (nil(fmt)) return "";
         val out = new StringBuilder(fmt);
         int idx = add.length();
         while (--idx > -1) {
